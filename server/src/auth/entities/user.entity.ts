@@ -2,8 +2,6 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import {  Document } from "mongoose";
 
-const role = ['Admin_role', 'user_role', 'seller_role', ]
-
 @Schema({timestamps: true})
 export class User extends Document {
 
@@ -41,11 +39,9 @@ export class User extends Document {
     birth: string;
 
     @Prop({
-        required: true,
-        enum: role,
-        default: 'user_role'
+        default: ['user'],
     })
-    user_role: string
+    user_role: string[]
 
     @Prop({
         default: true

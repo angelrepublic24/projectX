@@ -1,11 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { IsString, MinLength, IsEmail, IsNotEmpty, IsDate, IsEnum, IsBoolean, IsOptional, MaxLength, Matches } from "class-validator";
-
-enum userRole{
-    'user_role',
-    'admin_role',
-    'seller_role'
-}
+import { IsString, MinLength, IsEmail, IsNotEmpty, IsDate, IsEnum, IsBoolean, IsOptional, MaxLength, Matches, IsArray } from "class-validator";
 
 export class CreateUserDto {
     @IsString()
@@ -35,10 +29,10 @@ export class CreateUserDto {
     @IsString()
     birth: string;
 
-    @IsEnum(userRole)
     @IsNotEmpty()
     @IsOptional()
-    user_role: userRole
+    @IsArray()
+    user_role: string[]
 
     @IsBoolean()
     @IsOptional()

@@ -7,6 +7,8 @@ import { CommonModule } from './common/common.module';
 import { AuthModule } from './auth/auth.module';
 import { ProductsModule } from './products/products.module';
 import { EnvConfiguration } from './common/config/app.config';
+import { CategoriesModule } from './categories/categories.module';
+import { SubCategoriesModule } from './sub-categories/sub-categories.module';
 
 @Module({
   imports: [
@@ -16,7 +18,7 @@ import { EnvConfiguration } from './common/config/app.config';
     MongooseModule.forRoot(process.env.MONGODB),
     CommonModule,
     AuthModule, 
-    ProductsModule],
+    ProductsModule, CategoriesModule, SubCategoriesModule],
  
 })
 export class AppModule {}
