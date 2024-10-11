@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable prefer-const */
 /* eslint-disable prettier/prettier */
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -5,7 +7,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Product } from './entities/product.entity';
 import { Model } from 'mongoose';
-import { User } from 'src/auth/entities/user.entity';
+import { User, UserSchema } from 'src/auth/entities/user.entity';
 import { ProductImage } from './entities/product-image.entity';
 import * as fs from 'fs';
 
@@ -15,23 +17,15 @@ export class ProductsService {
   constructor(
     @InjectModel(Product.name)
     private readonly productModel: Model<Product>,
-
-    // @InjectModel(ProductImage.name)
-    // private readonly ImageModel: Model<ProductImage>
   ) {}
   async create(createProductDto: CreateProductDto, user: User) {
     try{
-      const {images=[], ...productDetail} = createProductDto;
-      // const files = images.map(image => this.ImageModel.create({url: image, product: Product}));
-      // const resolvedFile = await Promise.all(files);
-      // const fileId = resolvedFile.map(file => file._id)
-      
-      const product = await this.productModel.create({
-        ...productDetail, 
+      const product = createProductDto;  
+      const newProduct = await this.productModel.create({
+        ...product, 
         user,
-        images: fileId
       })
-      return product 
+      return newProduct 
     
     }catch(error){
       throw new NotFoundException(error)
@@ -41,11 +35,27 @@ export class ProductsService {
   async findAll() {
     let products = await this.productModel.find()
     .populate('category', '-__v -createdAt')
+    .populate({
+      path: 'images',
+      select: 'url'
+    })
     return products
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} product`;
+  async findUserProducts(userId: string){
+    const product = await this.productModel.find({user: userId})
+    return product;
+
+  }
+
+  async findOne(id: string) {
+    const product = await this.productModel.findOne({_id: id})
+    .populate('category', '-__v -createdAt')
+    .populate({
+      path: 'images',
+      select: 'url'
+    })
+    return product
   }
 
   update(id: number, updateProductDto: UpdateProductDto) {
@@ -56,37 +66,4 @@ export class ProductsService {
     return `This action removes a #${id} product`;
   }
 
-  async media(productId, file: Express.Multer.File){
-    if (!file){
-      throw new BadRequestException('Requested invalid')
-    }
-
-    const fileName = file.originalname;
-    const fileSplit = fileName.split('.');
-    const fileExt = fileSplit[1];
-
-    if(!['png', 'jpg,', 'jpeg', 'gif'].includes(fileExt)){
-      fs.unlink(file.path, (error) => {
-        if(error) throw new InternalServerErrorException('Failed to delete invalid file')
-      })
-      throw new BadRequestException('The extension is not supported')
-    }
-
-    try{
-      const product = await this.productModel.findByIdAndUpdate(
-        {_id: productId},
-        {images: file.filename},
-        {new: true}
-      )
-      if(!product) throw new BadRequestException('Product doest not exist')
-
-        return {
-          product,
-          images: file
-        }
-    }catch(error){
-      throw new InternalServerErrorException(error.message)
-    }
-
-  }
 }

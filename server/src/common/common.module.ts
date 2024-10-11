@@ -5,6 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from 'src/auth/entities/user.entity';
 import { ConfigModule } from '@nestjs/config';
 import { EnvConfiguration } from './config/app.config';
+import { MediaModule } from './media/media.module';
 
 @Module({
     imports: [
@@ -14,7 +15,8 @@ import { EnvConfiguration } from './config/app.config';
         MongooseModule.forFeature([{
             name: User.name,
             schema: UserSchema
-        }])
+        }]),
+        MediaModule
     ],
     providers: [JwtStrategy],
     exports: [JwtStrategy]

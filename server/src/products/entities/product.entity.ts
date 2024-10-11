@@ -75,7 +75,7 @@ export class Product extends Document {
     user: User;
 
     @Prop({
-        type: mongoose.Schema.Types.ObjectId,
+        type: [mongoose.Schema.Types.ObjectId],
         ref: 'ProductImage'
     })
     images: ProductImage[]
