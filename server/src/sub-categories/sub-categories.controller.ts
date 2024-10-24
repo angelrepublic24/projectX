@@ -23,7 +23,7 @@ export class SubCategoriesController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.subCategoriesService.findOne(+id);
+    return this.subCategoriesService.findOne(id);
   }
 
   @Patch(':id')

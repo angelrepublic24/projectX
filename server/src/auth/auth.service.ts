@@ -1,11 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable prettier/prettier */
 import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
-  Res,
   UnauthorizedException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -17,14 +15,27 @@ import * as bcrypt from 'bcrypt';
 import { LoginUserDto } from './dto/login-user.dto';
 import { JwtService } from '@nestjs/jwt';
 import * as nodemailer from 'nodemailer';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 @Injectable()
 export class AuthService {
+  private transporter: nodemailer.Transporter;
   constructor(
     @InjectModel(User.name)
     private readonly userModel: Model<User>,
     private jwtService: JwtService,
-  ) {}
+    private readonly cloudinaryService: CloudinaryService,
+  ) {
+    // this.transporter = nodemailer.createTransport({
+    //   host: 'smtp.gmail.com',
+    //   port: 587,
+    //   secure: false,
+    //   auth: {
+    //     user: 'angelrepublic24@gmail.com',
+    //     password: 'almonte2410'
+    //   },
+    // } as nodemailer.TransportOptions);
+  }
 
   async create(createUserDto: CreateUserDto) {
     try {
@@ -33,7 +44,7 @@ export class AuthService {
         ...userData,
         password: bcrypt.hashSync(password, 10),
       });
-      await this.validateEmail(user.email);
+      // await this.sendActivationEmail(String(user.email), String(user._id));
 
       return {
         status: 'success',
@@ -46,54 +57,133 @@ export class AuthService {
   }
 
   async findAll() {
-    return this.userModel.find();
+    return this.userModel.find({ status: true });
   }
 
   async findOne(term: string) {
     let user: User;
+    if (!user && isValidObjectId(term)) {
+      user = await this.userModel.findOne({ _id: term, status: true });
+    }
     if (!user) {
       user = await this.userModel.findOne({
-        name: term.toLocaleLowerCase(),
+        name: { $regex: new RegExp(term, 'i') },
+        status: true,
       });
-    }
-    if (!user && isValidObjectId(term)) {
-      user = await this.userModel.findOne({ _id: term });
     }
 
     if (!user)
       throw new NotFoundException(`User with id, name or no ${term} not found`);
-
-    console.log(user);
     return {
       status: 'success',
       user,
     };
   }
+  async findMany(term: string) {
+    let users: User[] = [];
+  
+    if (isValidObjectId(term)) {
+      users = await this.userModel.find({ _id: term, status: true });
+    }
+  
+    if (users.length === 0) {
+      users = await this.userModel.find({
+        name: { $regex: new RegExp(term, 'i') },
+        status: true,
+      });
+    }
+  
+    if (users.length === 0) {
+      throw new NotFoundException(`No users found for term: ${term}`);
+    }
+  
+    return {
+      status: 'success',
+      users, 
+    };
+  }
 
   async loginUser(loginUserDto: LoginUserDto) {
-    const { email, username, password } = loginUserDto;
-    const user = await this.userModel
-      .findOne({
-        $or: [{ email }, { username }],
-      })
-      .select({ email: true, password: true, username: true, _id: true });
-    if (!user)
-      throw new UnauthorizedException(
-        'Credential are not valid (email) or username',
+    try {
+      const { email, username, password } = loginUserDto;
+      const user = await this.userModel
+        .findOne({
+          $or: [{ email }, { username }],
+        })
+        .select({ email: true, password: true, username: true, _id: true });
+      if (!user)
+        throw new UnauthorizedException(
+          'Credential are not valid (email) or username',
+        );
+
+      if (!bcrypt.compareSync(password, user.password))
+        throw new UnauthorizedException('Credential are not valid (password)');
+
+      if (user.status == false)
+        throw new UnauthorizedException('User is inactive');
+
+      return {
+        user,
+        token: this.getToken({
+          _id: user.id,
+        }),
+      };
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async update(updateDto: UpdateUserDto, userId: string) {
+    try {
+      const user = await this.userModel.findOneAndUpdate({_id:userId}, updateDto, {
+        new: true,
+      });
+
+      if (!user) throw new NotFoundException(`User ${userId} not found`);
+
+      return user;
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
+  }
+
+  async remove(id: string) {
+    try {
+      const user = await this.userModel.findByIdAndUpdate(
+        id,
+        { status: false },
+        { new: true },
       );
+      if (!user) throw new NotFoundException(`User ${id} not found`);
 
-    if (!bcrypt.compareSync(password, user.password))
-      throw new UnauthorizedException('Credential are not valid (password)');
+      return user;
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
+  }
 
-    if (user.status == false)
-      throw new UnauthorizedException('User is inactive');
+  async uploadAvatar(files: Express.Multer.File[], userId: string) {
+    try {
+      const uploadAvatar: string[] = [];
+      const folderPath = `user/${userId}`;
 
-    return {
-      user,
-      token: this.getToken({
-        _id: user.id,
-      }),
-    };
+      for (const file of files) {
+        const results = await this.cloudinaryService.uploadMedia([file], folderPath);
+        results.forEach((result) => {
+          uploadAvatar.push(result.secure_url);
+        });
+
+        const updateUser = await this.userModel.findOneAndUpdate(
+          { _id: userId },
+          { $set: { avatar: uploadAvatar[0] } },
+          { new: true },
+        );
+        if (!updateUser) throw new NotFoundException(`User ${userId} not found`);
+        return updateUser;
+      }
+    } catch (error) {
+      throw new BadRequestException(`Could not upload image: ${error.message}`);
+    }
   }
 
   private getToken(payload: any) {
@@ -103,34 +193,6 @@ export class AuthService {
     } catch (error) {
       throw new BadRequestException(error);
     }
-  }
-
-  async validateEmail(email: string): Promise<void> {
-    const transport = nodemailer.createTransport({
-      service: 'gmail',
-      port: 587,
-      secure: false,
-      auth: {
-        user: 'email@gmail.com',
-        pass: 'password',
-      },
-      tls: {
-        rejectUnauthorized: false
-      }
-    });
-    const mailOptions = {
-      from: 'your_email@gmail.com',
-      to: email,
-      subject: 'Email confirmation',
-      text: 'Thanks for create an user with us, Please confirm your email by clicking the following link: [Confirmation Link]',
-    };
-    transport.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        throw new BadRequestException(error);
-      } else {
-        console.log(info.response);
-      }
-    });
   }
 
   private handleExpection(error: any) {

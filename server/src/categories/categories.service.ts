@@ -12,7 +12,6 @@ export class CategoriesService {
     private readonly categoryModel: Model<Category>
   ){}
  async create(createCategoryDto: CreateCategoryDto) {
-
     return this.categoryModel.create(createCategoryDto);
   }
 

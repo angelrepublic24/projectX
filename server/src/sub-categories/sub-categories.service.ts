@@ -30,8 +30,9 @@ export class SubCategoriesService {
     return subCategories
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} subCategory`;
+  async findOne(id: string) {
+    const subCategory = await this.subCategoryModel.findOne({_id: id});
+    return subCategory;
   }
 
   update(id: number, updateSubCategoryDto: UpdateSubCategoryDto) {

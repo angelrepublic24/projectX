@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { Injectable, Logger, UnauthorizedException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { PassportStrategy } from "@nestjs/passport";
 import { Model } from "mongoose";
@@ -11,14 +11,18 @@ import { AuthService } from "src/auth/auth.service";
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy){
+    private readonly logger = new Logger(JwtStrategy.name);
+
     constructor(
         @InjectModel(User.name)
         private readonly userModel: Model<User>
     ){
         super({
-            secretOrKey: process.env.JWT_SECRET,
+            secretOrKey: process.env.JWT_SECRET || 'default_secret_key',
             jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken()
         })
+        this.logger.log(`JWT_SECRET: ${process.env.JWT_SECRET}`); // Debugging
+
     }
 
     async validate(payload: JwtPayload): Promise<User>{

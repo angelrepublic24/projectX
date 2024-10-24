@@ -46,7 +46,12 @@ export class User extends Document {
     @Prop({
         default: true
     })
-    status: boolean
+    status: boolean;
+
+    @Prop({
+        type: [String]
+    })
+    avatar: string[]
 
 
 }

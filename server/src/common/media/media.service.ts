@@ -39,59 +39,62 @@ export class MediaService {
     return path;
   }
 
-  async uploadMedia(entityType: string, id: string, imagePath: string[], mediaField: string) {
-    try {
-      const model = this.entityModels[entityType];
+  // async uploadMedia(entityType: string, id: string, imagePath: string[], mediaField: string) {
+  //   try {
+  //     const model = this.entityModels[entityType];
 
-      const uploadProduct = await model.findOneAndUpdate(
-        { _id: id },
-        { [mediaField]: imagePath },
-        { new: true },
-      );
-      if (!uploadProduct)
-        throw new NotFoundException(`${entityType} not found`);
+  //     const uploadProduct = await model.findOneAndUpdate(
+  //       { _id: id },
+  //       { [mediaField]: imagePath },
+  //       { new: true },
+  //     );
+  //     if (!uploadProduct)
+  //       throw new NotFoundException(`${entityType} not found`);
 
-      return uploadProduct;
-    } catch (error) {
-      throw new BadRequestException(error);
-    }
-  }
+  //     return uploadProduct;
+  //   } catch (error) {
+  //     throw new BadRequestException(error);
+  //   }
+  // }
 
-  async saveMedia(entityType: string, entityId: string, mediaPaths: string[], mediaField: string) {
-    let model: Model<any>;
+  // async saveMedia(entityType: string, entityId: string, mediaPaths: string[], mediaField: string) {
+  //   let model: Model<any>;
     
-    // Determina qué modelo usar según el entityType
-    switch (entityType) {
-      case 'product':
-        model = this.productImageModel;
-        break;
-      case 'user':
-        model = this.userModel;
-        break;
-      default:
-        throw new BadRequestException(`Entity type '${entityType}' not supported`);
-    }
+  //   // Determina qué modelo usar según el entityType
+  //   switch (entityType) {
+  //     case 'product':
+  //       model = this.productModel;
+  //       break;
+  //     case 'user':
+  //       model = this.userModel;
+  //       break;
+  //     default:
+  //       throw new BadRequestException(`Entity type '${entityType}' not supported`);
+  //   }
 
-    const savedImages = await Promise.all(mediaPaths.map(async (path) => {
-      const image = new model();
-      image.url = path;
+  //   const savedImages = await Promise.all(mediaPaths.map(async (path) => {
+  //     const image = new model();
+  //     image.url = path;
 
-      if (entityType === 'product') {
-        image.product = entityId; 
+  //     if (entityType === 'product') {
+  //       image.product = entityId; 
 
-      } 
+  //     } 
 
-      return await image.save();
-    }));
-    if (entityType === 'product') {
-      await this.productModel.findOneAndUpdate(
-        { _id: entityId },
-        { $addToSet: { images: { $each: savedImages.map(img => img._id) } } }, // Agrega los IDs de las imágenes
-        { new: true } // Devuelve el documento actualizado
-      );
-    }
-  
-    return savedImages; 
-    
-  }
+  //     return await image.save();
+  //   }));
+  //   if (entityType === 'product') {
+  //     const updateProduct = await this.productModel.findOneAndUpdate(
+  //       { _id: entityId },
+  //       { $addToSet: { [mediaField]: { $each: mediaPaths } } }, // Agrega los IDs de las imágenes
+  //       { new: true } // Devuelve el documento actualizado
+  //     );
+  //     if(!updateProduct) throw new NotFoundException(`Product ${entityId} not found`);
+  //     return updateProduct;
+
+  //   }else{
+  //     throw new BadRequestException(`Entity type '${entityType}' is not supported for media upload`);
+
+  //   }    
+  // }
 }

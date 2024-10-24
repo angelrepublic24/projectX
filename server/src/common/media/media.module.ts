@@ -7,10 +7,14 @@ import { User, UserSchema } from 'src/auth/entities/user.entity';
 import { Product, ProductSchema } from 'src/products/entities/product.entity';
 import { AuthModule } from 'src/auth/auth.module';
 import { ProductsModule } from 'src/products/products.module';
+import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { MulterModule } from '@nestjs/platform-express';
 
 @Module({
   imports: [
     AuthModule,
+    CloudinaryModule,
     ProductsModule,
     MongooseModule.forFeature([
       {
@@ -24,6 +28,6 @@ import { ProductsModule } from 'src/products/products.module';
     ]),
   ],
   controllers: [MediaController],
-  providers: [MediaService],
+  providers: [MediaService, CloudinaryService],
 })
 export class MediaModule {}

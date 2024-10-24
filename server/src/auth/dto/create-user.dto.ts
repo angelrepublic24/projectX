@@ -37,4 +37,11 @@ export class CreateUserDto {
     @IsBoolean()
     @IsOptional()
     status: boolean
+
+    @IsArray()
+    @IsOptional()
+    @IsString({
+        each: true
+    })
+    avatar?: string[];
 }

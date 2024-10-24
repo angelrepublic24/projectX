@@ -6,6 +6,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Product, ProductSchema } from './entities/product.entity';
 import { AuthModule } from 'src/auth/auth.module';
 import { ProductImage, ProductImageSchema } from './entities/product-image.entity';
+import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
 
 @Module({
   controllers: [ProductsController],
@@ -21,7 +22,7 @@ import { ProductImage, ProductImageSchema } from './entities/product-image.entit
         schema: ProductImageSchema
       }
     ]),
-    AuthModule
+    AuthModule, CloudinaryModule
   ],
   exports:  [MongooseModule]
 })

@@ -8,14 +8,13 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule } from '@nestjs/config';
 import { JwtStrategy } from 'src/common/strategies/jwt.strategy';
-import { MailerModule } from '@nestjs-modules/mailer';
-import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
+import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
 
 @Module({
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
   imports: [
-    ConfigModule,
+    ConfigModule.forRoot(),
     MongooseModule.forFeature([
       {
         name: User.name,
@@ -24,24 +23,12 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
     ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
-      secret: process.env.JWT_SECRET,
+      secret: process.env.JWT_SECRET || 'default_secret_key',
       signOptions: {
         expiresIn: '1d',
       },
     }),
-    // MailerModule.forRoot({
-    //     transport: 'smtps://user@domain.com:pass@smtp.domain.com',
-    //     defaults: {
-    //       from: '"nest-modules" <modules@nestjs.com>',
-    //     },
-    //     template: {
-    //       dir: __dirname + '/templates',
-    //       adapter: new HandlebarsAdapter(),
-    //       options: {
-    //         strict: true,
-    //       },
-    //     },
-    // }),
+    CloudinaryModule
   ],
   exports: [MongooseModule, JwtModule, PassportModule],
 })
