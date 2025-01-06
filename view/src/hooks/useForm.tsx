@@ -10,7 +10,7 @@ interface Props {
     changed: (event: ChangeEvent<HTMLInputElement>) => void
 }
 
-const useForm = (initialObj): Props => {
+const useForm = (initialObj: any): Props => {
 
     const [form, setForm] = useState(initialObj);
 
