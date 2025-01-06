@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import NavBar from "@/Layout/NavBar";
+// import NavBar from "@/Layout/NavBar";
 import { inter } from "@/config/fonts";
 
 
